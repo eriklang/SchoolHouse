@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using SchoolHouse.DataAccess.Data.Repository.IRepository;
+using SchoolHouse.Models;
 
 namespace SchoolHouse.Web.Areas.Admin.Controllers
 {
@@ -21,6 +22,43 @@ namespace SchoolHouse.Web.Areas.Admin.Controllers
         public IActionResult Index()
         {
             return View();
+        }
+
+        public IActionResult Upsert(int? id)
+        {
+            Student student = new Student();
+            if(id == null)
+            {
+                return View(student);
+            }
+            student = _unitOfWork.Student.Get(id.GetValueOrDefault());
+            if(student == null)
+            {
+                return NotFound();
+            }
+
+            return View(student);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Upsert(Student student)
+        {
+            if(ModelState.IsValid)
+            {
+                if(student.StudentId == 0)
+                {
+                    _unitOfWork.Student.Add(student);
+                }
+                else
+                {
+                    _unitOfWork.Student.Update(student);
+                }
+
+                _unitOfWork.Save();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(student);
         }
 
 
